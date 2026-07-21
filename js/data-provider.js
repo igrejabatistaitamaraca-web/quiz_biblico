@@ -28,6 +28,31 @@ function uuid() {
 }
 
 /**
+ * Normaliza uma linha da tabela "perguntas" (nomes de coluna em
+ * português, resposta_correta em minúscula) para o formato interno
+ * usado por tv.js / controle.js.
+ */
+function mapPergunta(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    question: row.pergunta,
+    option_a: row.alternativa_a,
+    option_b: row.alternativa_b,
+    option_c: row.alternativa_c,
+    option_d: row.alternativa_d,
+    correct_option: (row.resposta_correta || "").toUpperCase(),
+    audio_url: row.audio_url || null,
+    category: row.categoria,
+    difficulty: row.dificuldade,
+    type: row.tipo || "multiple_choice",
+    time_limit: row.tempo_limite || 15,
+    explanation: row.explicacao || "",
+    reference: row.referencia || "",
+  };
+}
+
+/**
  * Calcula pontos: base 100, decai linearmente com o tempo de resposta
  * até 0 no limite da pergunta. Nunca negativo. Resposta errada = 0.
  */
@@ -302,15 +327,15 @@ class SupabaseDataProvider {
     const room = await this.getRoom(roomId);
     const nextIndex = room.current_question_index + 1;
 
-    const { data: questions, error: qErr } = await sb
-      .from("questions")
+    const { data: rows, error: qErr } = await sb
+      .from("perguntas")
       .select("*")
-      .eq("active", true)
+      .eq("ativo", true)
       .order("id")
       .range(nextIndex, nextIndex);
     if (qErr) throw qErr;
 
-    const question = questions?.[0];
+    const question = mapPergunta(rows?.[0]);
     if (!question) {
       await sb.from("rooms").update({ status: "finished" }).eq("id", roomId);
       return null;
@@ -367,12 +392,13 @@ class SupabaseDataProvider {
   async finishQuestion(roomId) {
     const sb = await this._sb();
     const room = await this.getRoom(roomId);
-    const { data: question, error: qErr } = await sb
-      .from("questions")
+    const { data: row, error: qErr } = await sb
+      .from("perguntas")
       .select("*")
       .eq("id", room.current_question_id)
       .single();
     if (qErr) throw qErr;
+    const question = mapPergunta(row);
 
     const answers = await this.getAnswers(roomId, question.id);
     for (const ans of answers) {
