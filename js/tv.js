@@ -70,7 +70,8 @@ function renderLobby() {
 
   const full = players.length >= room.max_players;
   document.getElementById("room-full-msg").classList.toggle("hidden", !full);
-  document.getElementById("btn-start-game").disabled = players.length === 0;
+  document.getElementById("min-players-msg").classList.toggle("hidden", players.length >= 2);
+  document.getElementById("btn-start-game").disabled = players.length < 2;
 }
 
 document.getElementById("btn-start-game").addEventListener("click", async () => {

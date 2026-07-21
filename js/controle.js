@@ -93,6 +93,7 @@ document.getElementById("btn-join").addEventListener("click", async () => {
     document.getElementById("summary-name").textContent = player.name;
     document.getElementById("summary-icon").textContent = player.nickname;
     showScreen("waiting");
+    await refreshWaitingCount();
 
     provider.subscribeRoom(room.id, handleRealtimeEvent);
   } catch (err) {
@@ -111,6 +112,8 @@ function handleRealtimeEvent(type, payload) {
   if (type === "new_question") {
     answeredQuestionIds = new Set(); // nova pergunta, libera resposta
     showQuestion(payload.question);
+  } else if (type === "player_joined") {
+    refreshWaitingCount();
   } else if (type === "question_finished") {
     showQuestionResult(payload);
   } else if (type === "game_finished") {
@@ -143,6 +146,15 @@ function showQuestion(question) {
 
   document.getElementById("answer-grid").querySelectorAll("button").forEach((b) => (b.disabled = false));
   showScreen("question");
+}
+
+async function refreshWaitingCount() {
+  if (!room) return;
+  const players = await provider.listPlayers(room.id);
+  const count = players.length;
+  document.getElementById("waiting-count").textContent = `${count} / ${room.max_players} jogadores`;
+  document.getElementById("waiting-min-msg").classList.toggle("hidden", count >= 2);
+  document.getElementById("waiting-host-msg").classList.toggle("hidden", count < 2);
 }
 
 function showQuestionResult({ question, answers, players }) {

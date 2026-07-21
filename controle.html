@@ -105,12 +105,13 @@
   #result-position { color: var(--parchment-dim); }
 
   #error-message { color: var(--crimson); font-size:1.1rem; max-width: 80vw; }
+  .hidden { display:none !important; }
 </style>
 </head>
 <body>
 
   <!-- ENTRAR NA SALA -->
-  <section id="screen-join" class="screen center">
+  <section id="screen-join" class="screen center active">
     <div class="eyebrow">BoardVerse</div>
     <h1 class="title-main">BÍBLIA QUIZ LIVE</h1>
 
@@ -132,7 +133,9 @@
   <section id="screen-waiting" class="screen center">
     <div id="summary-icon">🦁</div>
     <div id="summary-name">—</div>
-    <p class="pulse eyebrow" style="margin-top:2rem">Aguardando o anfitrião iniciar...</p>
+    <div id="waiting-count" class="eyebrow" style="margin-top:1.5rem">1 / 6 jogadores</div>
+    <p id="waiting-min-msg" class="pulse" style="color:var(--parchment-dim)">Aguardando pelo menos 2 jogadores para começar...</p>
+    <p id="waiting-host-msg" class="pulse eyebrow hidden">Aguardando o anfitrião iniciar...</p>
   </section>
 
   <!-- PERGUNTA -->
