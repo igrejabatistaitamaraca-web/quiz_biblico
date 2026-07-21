@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Bíblia Quiz Live — Controle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --night: #12142A;
+    --night-deep: #0B0C1C;
+    --parchment: #F3E8CC;
+    --parchment-dim: #C9BC98;
+    --gold: #C9A227;
+    --gold-bright: #E8C94A;
+    --crimson: #8A2331;
+    --ink: #1C1608;
+    --blue: #3B82F6;
+    --red: #EF4444;
+    --yellow: #F59E0B;
+    --green: #22C55E;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin:0; height:100%; width:100%;
+    background: radial-gradient(ellipse at 50% -10%, #22254a 0%, var(--night) 60%, var(--night-deep) 100%);
+    color: var(--parchment);
+    font-family: 'Crimson Pro', serif;
+    overscroll-behavior: none;
+  }
+  h1,h2,h3,.display { font-family:'Cinzel', serif; letter-spacing:.03em; }
+
+  .screen {
+    display:none; min-height:100vh; width:100%;
+    flex-direction:column; align-items:center; justify-content:flex-start;
+    padding: 5vh 5vw 4vh; text-align:center;
+  }
+  .screen.active { display:flex; }
+  .screen.center { justify-content:center; }
+
+  .eyebrow { font-family:'Cinzel'; color:var(--gold); letter-spacing:.3em; font-size:.75rem; text-transform:uppercase; margin-bottom: 1vh;}
+  .title-main { font-size: 1.9rem; font-weight:900; color: var(--gold-bright); margin: 0 0 .5rem; }
+  .room-label { color: var(--parchment-dim); margin-bottom: 3vh; }
+
+  label { display:block; text-align:left; font-family:'Cinzel'; font-size:.85rem; color: var(--gold); margin: 2vh 0 .6vh; letter-spacing:.05em;}
+  input[type=text] {
+    width:100%; padding: 1.1rem 1rem; font-size:1.1rem; border-radius:10px;
+    border: 1px solid rgba(201,162,39,.5); background: rgba(243,232,204,0.06); color: var(--parchment);
+    font-family:'Crimson Pro';
+  }
+  input[type=text]::placeholder { color: var(--parchment-dim); }
+  input[type=text]:focus { outline: 2px solid var(--gold-bright); }
+
+  #icon-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap: .7rem; margin-top: .5rem; width:100%; }
+  .icon-option {
+    font-size: 1.7rem; padding: .8rem 0; border-radius: 12px;
+    background: rgba(243,232,204,0.06); border: 1px solid rgba(201,162,39,.35); color: var(--parchment);
+  }
+  .icon-option.selected { background: var(--gold); border-color: var(--gold-bright); box-shadow: 0 0 0 3px rgba(232,201,74,.4); }
+
+  button { font-family:'Cinzel'; cursor:pointer; border:none; }
+  .btn-gold {
+    width:100%; margin-top: 3vh; background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+    color: var(--ink); font-weight:700; padding: 1.1rem; font-size:1.05rem; border-radius:10px;
+    letter-spacing:.05em; box-shadow: 0 6px 18px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.4);
+  }
+  .btn-gold:disabled { opacity:.35; }
+
+  /* ---------- WAITING ---------- */
+  #summary-icon { font-size: 4rem; margin: 1rem 0; }
+  #summary-name { font-size: 1.3rem; color: var(--gold-bright); }
+  .pulse { animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+  /* ---------- QUESTION / ANSWER GRID ---------- */
+  #c-q-text { font-size: 1.3rem; margin-bottom: 3vh; line-height:1.35; }
+  #answer-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; width:100%; flex:1; }
+  .answer-btn {
+    --color: var(--gold);
+    position:relative;
+    background: var(--color);
+    color: #10121f;
+    border-radius: 16px;
+    min-height: 22vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.5rem;
+    font-family:'Crimson Pro'; font-weight:700; font-size:1.15rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,.4);
+    overflow:hidden;
+  }
+  .answer-btn::before {
+    content:""; position:absolute; top:0; right:0; width:0; height:0;
+    border-style:solid; border-width: 0 34px 34px 0; border-color: transparent rgba(0,0,0,.15) transparent transparent;
+  }
+  .answer-btn:active { transform: scale(.97); }
+  .answer-btn:disabled { opacity:.45; }
+  .answer-btn .letter { font-family:'Cinzel'; font-weight:900; font-size:1.6rem; }
+
+  /* ---------- SUBMITTED / RESULT / FINAL ---------- */
+  .big-emoji { font-size: 3.5rem; margin-bottom: 1rem; }
+  .feedback { font-family:'Cinzel'; font-size:1.3rem; margin-bottom:.5rem; }
+  .feedback.correct { color: var(--green); }
+  .feedback.wrong { color: var(--red); }
+  #result-points { color: var(--gold-bright); font-size:1.4rem; font-family:'Cinzel'; margin-bottom: 1rem; }
+  #result-position { color: var(--parchment-dim); }
+
+  #error-message { color: var(--crimson); font-size:1.1rem; max-width: 80vw; }
+</style>
+</head>
+<body>
+
+  <!-- ENTRAR NA SALA -->
+  <section id="screen-join" class="screen center">
+    <div class="eyebrow">BoardVerse</div>
+    <h1 class="title-main">BÍBLIA QUIZ LIVE</h1>
+
+    <div style="width:100%">
+      <label for="input-room-code">Código da sala</label>
+      <input type="text" id="input-room-code" placeholder="ABC123" maxlength="6" autocapitalize="characters" />
+
+      <label for="input-name">Seu nome</label>
+      <input type="text" id="input-name" placeholder="Digite seu nome" maxlength="24" />
+
+      <label>Escolha seu ícone</label>
+      <div id="icon-grid"></div>
+
+      <button id="btn-join" class="btn-gold" disabled>Entrar na Sala</button>
+    </div>
+  </section>
+
+  <!-- AGUARDANDO -->
+  <section id="screen-waiting" class="screen center">
+    <div id="summary-icon">🦁</div>
+    <div id="summary-name">—</div>
+    <p class="pulse eyebrow" style="margin-top:2rem">Aguardando o anfitrião iniciar...</p>
+  </section>
+
+  <!-- PERGUNTA -->
+  <section id="screen-question" class="screen">
+    <p id="c-q-text">Carregando pergunta...</p>
+    <div id="answer-grid"></div>
+  </section>
+
+  <!-- RESPOSTA ENVIADA -->
+  <section id="screen-submitted" class="screen center">
+    <div class="big-emoji">✅</div>
+    <h2>RESPOSTA ENVIADA!</h2>
+    <p class="pulse" style="color:var(--parchment-dim)">Aguardando resultado...</p>
+  </section>
+
+  <!-- RESULTADO -->
+  <section id="screen-result" class="screen center">
+    <div id="result-feedback" class="feedback">—</div>
+    <div id="result-points"></div>
+    <div id="result-position"></div>
+  </section>
+
+  <!-- FINAL -->
+  <section id="screen-final" class="screen center">
+    <div class="big-emoji">🏆</div>
+    <h2>Partida encerrada!</h2>
+    <p style="color:var(--parchment-dim)">Confira o ranking final na TV.</p>
+  </section>
+
+  <!-- ERRO -->
+  <section id="screen-error" class="screen center">
+    <div class="big-emoji">⚠️</div>
+    <p id="error-message">Não foi possível entrar na sala.</p>
+  </section>
+
+<script type="module" src="js/controle.js"></script>
+</body>
+</html>

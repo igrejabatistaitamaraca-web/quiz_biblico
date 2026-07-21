@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bíblia Quiz Live — TV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --night: #12142A;
+    --night-deep: #0B0C1C;
+    --parchment: #F3E8CC;
+    --parchment-dim: #E4D5AC;
+    --gold: #C9A227;
+    --gold-bright: #E8C94A;
+    --crimson: #8A2331;
+    --ink: #1C1608;
+    --blue: #3B82F6;
+    --red: #EF4444;
+    --yellow: #F59E0B;
+    --green: #22C55E;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background:
+      radial-gradient(ellipse at 50% -10%, #22254a 0%, var(--night) 55%, var(--night-deep) 100%);
+    color: var(--parchment);
+    font-family: 'Crimson Pro', serif;
+    overflow: hidden;
+  }
+
+  h1, h2, h3, .display {
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.04em;
+  }
+
+  .screen {
+    display: none;
+    height: 100vh;
+    width: 100vw;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4vh 6vw;
+    text-align: center;
+  }
+  .screen.active { display: flex; }
+
+  .eyebrow {
+    font-family: 'Cinzel', serif;
+    color: var(--gold);
+    letter-spacing: 0.35em;
+    font-size: 1.1vw;
+    text-transform: uppercase;
+    margin-bottom: 1.2vh;
+  }
+
+  .title-main {
+    font-size: 5.5vw;
+    font-weight: 900;
+    color: var(--gold-bright);
+    text-shadow: 0 0 40px rgba(201,162,39,0.35);
+    margin: 0 0 1vh;
+  }
+  .subtitle { font-size: 1.4vw; color: var(--parchment-dim); font-style: italic; margin-bottom: 5vh; }
+
+  button {
+    font-family: 'Cinzel', serif;
+    cursor: pointer;
+    border: none;
+  }
+
+  .btn-gold {
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+    color: var(--ink);
+    font-weight: 700;
+    padding: 1.4vh 3vw;
+    font-size: 1.4vw;
+    letter-spacing: 0.08em;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4);
+    transition: transform .15s ease;
+  }
+  .btn-gold:hover:not(:disabled) { transform: translateY(-2px); }
+  .btn-gold:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ---------- LOBBY ---------- */
+  #screen-lobby { flex-direction: row; gap: 5vw; }
+  .lobby-left { display:flex; flex-direction:column; align-items:center; }
+  #qr-code { background: var(--parchment); padding: 16px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+  .room-code-box { margin-top: 2vh; font-family:'Cinzel'; }
+  .room-code-box .label { font-size: .9vw; color: var(--parchment-dim); letter-spacing: .3em; text-transform: uppercase; }
+  #room-code { font-size: 3.5vw; color: var(--gold-bright); font-weight: 900; letter-spacing: .2em; }
+
+  .lobby-right { min-width: 32vw; }
+  #player-count { font-family:'Cinzel'; color: var(--gold); font-size: 1.3vw; margin-bottom: 1.5vh; }
+  #player-list { list-style:none; padding:0; margin:0; display:grid; grid-template-columns:1fr 1fr; gap: 1vh 1.5vw; }
+  #player-list li {
+    display:flex; align-items:center; gap: .8vw;
+    background: rgba(243,232,204,0.06);
+    border: 1px solid rgba(201,162,39,0.35);
+    border-radius: 10px;
+    padding: 1vh 1vw;
+    font-size: 1.3vw;
+  }
+  .p-icon { font-size: 1.8vw; }
+  #room-full-msg { color: var(--crimson); font-family:'Cinzel'; margin-top:1.5vh; }
+  .hidden { display:none !important; }
+
+  /* ---------- QUESTION ---------- */
+  #q-index { color: var(--gold); font-size: 1.3vw; margin-bottom: 1vh; }
+  #q-bible-open-banner {
+    background: rgba(201,162,39,0.15); border: 1px solid var(--gold);
+    padding: 1vh 2vw; border-radius: 10px; font-family:'Cinzel'; color: var(--gold-bright);
+    margin-bottom: 2vh; font-size: 1.1vw;
+  }
+  #q-text { font-size: 2.6vw; max-width: 80vw; margin-bottom: 3vh; line-height: 1.3; }
+  #timer {
+    font-family:'Cinzel'; font-size: 4vw; font-weight: 900; color: var(--gold-bright);
+    width: 6vw; height: 6vw; line-height: 6vw; border-radius: 50%;
+    border: 4px solid var(--gold); margin: 0 auto 3vh;
+  }
+  #timer.urgent { color: var(--red); border-color: var(--red); }
+
+  #q-options { display:grid; grid-template-columns: 1fr 1fr; gap: 1.5vw; width: 70vw; }
+  .option-card {
+    --color: var(--gold);
+    background: var(--color);
+    color: #10121f;
+    border-radius: 12px;
+    padding: 1.6vh 1.6vw;
+    display:flex; align-items:center; gap: 1vw;
+    font-size: 1.6vw; font-weight: 600;
+    box-shadow: 0 6px 18px rgba(0,0,0,.35);
+  }
+  .opt-emoji { font-size: 1.6vw; }
+  .opt-letter { font-family:'Cinzel'; font-weight:900; font-size:1.6vw; }
+
+  #answer-count { margin-top: 2.5vh; font-family:'Cinzel'; color: var(--parchment-dim); }
+
+  /* ---------- RESULT ---------- */
+  #correct-emoji { font-size: 3vw; }
+  #correct-text { font-size: 2.4vw; color: var(--gold-bright); font-family:'Cinzel'; }
+  #correct-ref { color: var(--parchment-dim); font-style: italic; margin: .5vh 0 1.5vh; }
+  #correct-explanation { max-width: 60vw; font-size: 1.2vw; margin-bottom: 3vh; }
+
+  #scoreboard, #final-scoreboard {
+    list-style:none; padding:0; margin: 0 auto; width: 46vw;
+    display:flex; flex-direction:column; gap: .8vh;
+  }
+  #scoreboard li, #final-scoreboard li {
+    display:grid; grid-template-columns: 2.5vw 3vw 1fr auto; align-items:center; gap: 1vw;
+    background: rgba(243,232,204,0.06); border: 1px solid rgba(201,162,39,0.3);
+    border-radius: 10px; padding: 1vh 1.4vw; font-size: 1.3vw;
+  }
+  .medal { font-size: 1.6vw; }
+  .p-score { color: var(--gold-bright); font-family:'Cinzel'; font-weight:700; }
+
+  /* ---------- FINAL ---------- */
+  #champion-icon { font-size: 6vw; }
+  #champion-name { font-size: 3vw; color: var(--gold-bright); }
+  #champion-score { color: var(--parchment-dim); margin-bottom: 3vh; }
+  .final-actions { display:flex; gap: 1.5vw; margin-top: 3vh; }
+</style>
+</head>
+<body>
+
+  <!-- TELA INICIAL -->
+  <section id="screen-start" class="screen active">
+    <div class="eyebrow">BoardVerse apresenta</div>
+    <h1 class="title-main">BÍBLIA QUIZ LIVE</h1>
+    <p class="subtitle">O quiz bíblico do auditório — na TV e no celular de todos</p>
+    <button id="btn-create-room" class="btn-gold">Criar Nova Sala</button>
+  </section>
+
+  <!-- LOBBY -->
+  <section id="screen-lobby" class="screen">
+    <div class="lobby-left">
+      <div class="eyebrow">Escaneie para entrar</div>
+      <div id="qr-code"></div>
+      <div class="room-code-box">
+        <div class="label">Código da sala</div>
+        <div id="room-code">------</div>
+      </div>
+    </div>
+    <div class="lobby-right">
+      <h2 style="margin-bottom:0">Jogadores</h2>
+      <div id="player-count">0 / 6</div>
+      <ul id="player-list"></ul>
+      <div id="room-full-msg" class="hidden">SALA CHEIA — máximo de 6 jogadores atingido.</div>
+      <button id="btn-start-game" class="btn-gold" style="margin-top:3vh" disabled>Iniciar Partida</button>
+    </div>
+  </section>
+
+  <!-- PERGUNTA -->
+  <section id="screen-question" class="screen">
+    <div id="q-index">PERGUNTA 1</div>
+    <div id="q-bible-open-banner" class="hidden">📖 BÍBLIA ABERTA — vocês podem consultar a Bíblia para responder!</div>
+    <div id="q-text">Carregando pergunta...</div>
+    <div id="timer">15</div>
+    <div id="q-options"></div>
+    <div id="answer-count">0 / 0</div>
+  </section>
+
+  <!-- RESULTADO DA PERGUNTA -->
+  <section id="screen-result" class="screen">
+    <div class="eyebrow">Resposta correta</div>
+    <div id="correct-emoji">🟦</div>
+    <div id="correct-text">—</div>
+    <div id="correct-ref">—</div>
+    <p id="correct-explanation"></p>
+    <h3 style="color:var(--gold)">Placar</h3>
+    <ul id="scoreboard"></ul>
+    <button id="btn-next-question" class="btn-gold" style="margin-top:3vh">Próxima Pergunta</button>
+  </section>
+
+  <!-- FINAL -->
+  <section id="screen-final" class="screen">
+    <div class="eyebrow">🏆 Grande Final</div>
+    <div id="champion-icon">🏆</div>
+    <h2 id="champion-name">—</h2>
+    <div id="champion-score">0 pontos</div>
+    <h3 style="color:var(--gold)">Ranking Final</h3>
+    <ul id="final-scoreboard"></ul>
+    <div class="final-actions">
+      <button id="btn-new-game" class="btn-gold">Nova Partida</button>
+      <button id="btn-back-home" class="btn-gold">Voltar ao Início</button>
+    </div>
+  </section>
+
+<script type="module" src="js/tv.js"></script>
+</body>
+</html>
