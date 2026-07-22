@@ -117,7 +117,7 @@ async function showQuestion(question) {
   document.getElementById("answer-count").textContent = `0 / ${players.length}`;
   showScreen("question");
 
-  if (question.type === "bible_open") {
+  if (question.type === "bible_open" && !question.audio_url) {
     await narrate(phrase("bibleOpen"), null);
   }
   await narrate(`${phrase("intro")} ${question.question}`, question.audio_url);

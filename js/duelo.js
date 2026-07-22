@@ -1,6 +1,6 @@
 import { getDataProvider } from "./data-provider.js";
 import { OPTION_META, PLAYER_ICONS } from "./questions.js";
-import { ROOM_STATUS, runLocalTimer, medalFor } from "./game.js";
+import { ROOM_STATUS, runLocalTimer, medalFor, renderQrCode } from "./game.js";
 
 const provider = getDataProvider();
 const screens = Object.fromEntries(
@@ -174,7 +174,9 @@ async function syncRoomState(updatedRoom) {
 function renderLobby() {
   showScreen("lobby");
   document.getElementById("room-code").textContent = room.code;
-  document.getElementById("invite-link").textContent = inviteUrl(room.code);
+  const url = inviteUrl(room.code);
+  document.getElementById("invite-link").textContent = url;
+  renderQrCode(document.getElementById("invite-qr"), url);
   document.getElementById("lobby-message").textContent =
     players.length < 2 ? "Aguardando pelo menos mais um jogador..." : `${players.length} jogadores prontos`;
   const list = document.getElementById("player-list");

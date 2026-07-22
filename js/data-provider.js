@@ -27,6 +27,71 @@ function uuid() {
   return crypto.randomUUID();
 }
 
+const MAX_QUESTIONS_PER_GAME = 15;
+
+function seededRandom(text) {
+  let seed = 2166136261;
+  for (const char of text) {
+    seed ^= char.charCodeAt(0);
+    seed = Math.imul(seed, 16777619);
+  }
+  return () => {
+    seed += 0x6d2b79f5;
+    let value = seed;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffled(items, random) {
+  const result = [...items];
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const target = Math.floor(random() * (index + 1));
+    [result[index], result[target]] = [result[target], result[index]];
+  }
+  return result;
+}
+
+function difficultyGroup(question) {
+  const value = (question.difficulty || "").toLowerCase();
+  if (["facil", "fácil", "easy"].includes(value)) return "easy";
+  if (["dificil", "difícil", "hard"].includes(value)) return "hard";
+  return "medium";
+}
+
+function placeBibleOpen(bucket, targetIndex) {
+  const openIndex = bucket.findIndex((question) => question.type === "bible_open");
+  if (openIndex < 0) return;
+  const [question] = bucket.splice(openIndex, 1);
+  bucket.splice(Math.min(targetIndex, bucket.length), 0, question);
+}
+
+export function buildQuestionSequence(questions, roomCode) {
+  const random = seededRandom(roomCode || "biblia-quiz");
+  const buckets = {
+    easy: shuffled(questions.filter((question) => difficultyGroup(question) === "easy"), random),
+    medium: shuffled(questions.filter((question) => difficultyGroup(question) === "medium"), random),
+    hard: shuffled(questions.filter((question) => difficultyGroup(question) === "hard"), random),
+  };
+
+  // Distribui perguntas de Bíblia aberta ao longo da rodada, quando disponíveis.
+  placeBibleOpen(buckets.easy, 1);
+  placeBibleOpen(buckets.medium, 2);
+  placeBibleOpen(buckets.hard, 3);
+
+  const sequence = [];
+  const order = ["easy", "medium", "hard"];
+  while (sequence.length < MAX_QUESTIONS_PER_GAME && order.some((key) => buckets[key].length)) {
+    for (const key of order) {
+      const question = buckets[key].shift();
+      if (question) sequence.push(question);
+      if (sequence.length >= MAX_QUESTIONS_PER_GAME) break;
+    }
+  }
+  return sequence;
+}
+
 /**
  * Normaliza uma linha da tabela "perguntas" (nomes de coluna em
  * português, resposta_correta em minúscula) para o formato interno
@@ -173,7 +238,7 @@ class DemoDataProvider {
     const store = this._store();
     const room = store.rooms[roomId];
     const nextIndex = room.current_question_index + 1;
-    const question = DEMO_QUESTIONS[nextIndex];
+    const question = buildQuestionSequence(DEMO_QUESTIONS, room.code)[nextIndex];
 
     if (!question) {
       room.status = "finished";
@@ -239,7 +304,7 @@ class DemoDataProvider {
   async finishQuestion(roomId) {
     const store = this._store();
     const room = store.rooms[roomId];
-    const question = DEMO_QUESTIONS[room.current_question_index];
+    const question = await this.getQuestion(room.current_question_id);
     const answers = Object.values(store.answers).filter(
       (a) => a.room_id === roomId && a.question_id === question.id
     );
@@ -374,11 +439,11 @@ class SupabaseDataProvider {
       .from("perguntas")
       .select("*")
       .eq("ativo", true)
-      .order("id")
-      .range(nextIndex, nextIndex);
+      .order("id");
     if (qErr) throw qErr;
 
-    const question = mapPergunta(rows?.[0]);
+    const sequence = buildQuestionSequence((rows || []).map(mapPergunta), room.code);
+    const question = sequence[nextIndex];
     if (!question) {
       const { error } = await sb.from("rooms").update({ status: "finished" }).eq("id", roomId);
       if (error) throw error;

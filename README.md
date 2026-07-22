@@ -64,6 +64,8 @@ Criar sala → QR Code → jogadores entram (nome + ícone) → host inicia
   → próxima pergunta → final da partida
 ```
 
+Cada partida seleciona no máximo 15 perguntas sem repetição. A ordem alterna entre fácil, média e difícil e é sorteada de forma estável para a sala. Quando houver perguntas do tipo `bible_open`, o jogo distribui três delas ao longo da rodada para incentivar a consulta à Bíblia.
+
 ## 5. Modo online (2 a 6 jogadores)
 
 Abra `duelo.html` para criar ou entrar em uma partida na qual todos veem as perguntas e o placar no próprio aparelho. O anfitrião compartilha o link da sala e controla o início e o avanço das rodadas.

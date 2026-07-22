@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.tmp
+*.mp3
+audio_errors.json
