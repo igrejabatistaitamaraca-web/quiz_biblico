@@ -96,6 +96,8 @@ document.getElementById("btn-join").addEventListener("click", async () => {
     await refreshWaitingCount();
 
     provider.subscribeRoom(room.id, handleRealtimeEvent);
+    // Recupera o estado caso ele mude entre a entrada e a assinatura Realtime.
+    await syncRoomState(await provider.getRoom(room.id));
   } catch (err) {
     if (err.message === "SALA_CHEIA") {
       showError("SALA CHEIA — Máximo de 6 jogadores atingido.");
@@ -108,8 +110,10 @@ document.getElementById("btn-join").addEventListener("click", async () => {
 // ------------------------------------------------------------
 // EVENTOS EM TEMPO REAL
 // ------------------------------------------------------------
-function handleRealtimeEvent(type, payload) {
-  if (type === "new_question") {
+async function handleRealtimeEvent(type, payload) {
+  if (type === "subscribed") {
+    await syncRoomState(await provider.getRoom(room.id));
+  } else if (type === "new_question") {
     answeredQuestionIds = new Set(); // nova pergunta, libera resposta
     showQuestion(payload.question);
   } else if (type === "player_joined") {
@@ -119,8 +123,30 @@ function handleRealtimeEvent(type, payload) {
   } else if (type === "game_finished") {
     showScreen("final");
   } else if (type === "room_update") {
-    if (payload.status === ROOM_STATUS.FINISHED) showScreen("final");
+    await syncRoomState(payload);
   }
+}
+
+async function syncRoomState(updatedRoom) {
+  if (!updatedRoom) return;
+  room = updatedRoom;
+
+  if (room.status === ROOM_STATUS.QUESTION_ACTIVE && room.current_question_id) {
+    if (currentQuestion?.id !== room.current_question_id) {
+      answeredQuestionIds.delete(room.current_question_id);
+      const question = await provider.getQuestion(room.current_question_id);
+      if (question) showQuestion(question);
+    }
+    return;
+  }
+
+  if (room.status === ROOM_STATUS.SHOWING_RESULT && room.current_question_id) {
+    const result = await provider.getQuestionResult(room.id, room.current_question_id);
+    if (result) showQuestionResult(result);
+    return;
+  }
+
+  if (room.status === ROOM_STATUS.FINISHED) showScreen("final");
 }
 
 // ------------------------------------------------------------

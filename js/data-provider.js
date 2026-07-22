@@ -124,9 +124,18 @@ class DemoDataProvider {
     return store.rooms[roomId] || null;
   }
 
+  async getQuestion(questionId) {
+    return DEMO_QUESTIONS.find((question) => question.id === questionId) || null;
+  }
+
   async listPlayers(roomId) {
     const store = this._store();
     return Object.values(store.players).filter((p) => p.room_id === roomId);
+  }
+
+  async getPlayer(playerId) {
+    const store = this._store();
+    return store.players[playerId] || null;
   }
 
   async joinPlayer(roomId, name, icon) {
@@ -217,6 +226,16 @@ class DemoDataProvider {
     );
   }
 
+  async getQuestionResult(roomId, questionId) {
+    const question = await this.getQuestion(questionId);
+    if (!question) return null;
+    return {
+      question,
+      answers: await this.getAnswers(roomId, questionId),
+      players: await this.listPlayers(roomId),
+    };
+  }
+
   async finishQuestion(roomId) {
     const store = this._store();
     const room = store.rooms[roomId];
@@ -242,6 +261,7 @@ class DemoDataProvider {
   subscribeRoom(roomId, callback) {
     if (!this._listeners.has(roomId)) this._listeners.set(roomId, new Set());
     this._listeners.get(roomId).add(callback);
+    queueMicrotask(() => callback("subscribed", null));
     return () => this._listeners.get(roomId)?.delete(callback);
   }
 }
@@ -289,6 +309,17 @@ class SupabaseDataProvider {
     return data;
   }
 
+  async getQuestion(questionId) {
+    const sb = await this._sb();
+    const { data, error } = await sb
+      .from("perguntas")
+      .select("*")
+      .eq("id", questionId)
+      .single();
+    if (error) throw error;
+    return mapPergunta(data);
+  }
+
   async listPlayers(roomId) {
     const sb = await this._sb();
     const { data, error } = await sb
@@ -296,6 +327,17 @@ class SupabaseDataProvider {
       .select("*")
       .eq("room_id", roomId)
       .order("joined_at", { ascending: true });
+    if (error) throw error;
+    return data;
+  }
+
+  async getPlayer(playerId) {
+    const sb = await this._sb();
+    const { data, error } = await sb
+      .from("players")
+      .select("*")
+      .eq("id", playerId)
+      .maybeSingle();
     if (error) throw error;
     return data;
   }
@@ -318,7 +360,8 @@ class SupabaseDataProvider {
 
   async startGame(roomId) {
     const sb = await this._sb();
-    await sb.from("rooms").update({ status: "playing" }).eq("id", roomId);
+    const { error } = await sb.from("rooms").update({ status: "playing" }).eq("id", roomId);
+    if (error) throw error;
     return this.nextQuestion(roomId);
   }
 
@@ -337,12 +380,13 @@ class SupabaseDataProvider {
 
     const question = mapPergunta(rows?.[0]);
     if (!question) {
-      await sb.from("rooms").update({ status: "finished" }).eq("id", roomId);
+      const { error } = await sb.from("rooms").update({ status: "finished" }).eq("id", roomId);
+      if (error) throw error;
       return null;
     }
 
     const now = Date.now();
-    await sb
+    const { error: roomError } = await sb
       .from("rooms")
       .update({
         current_question_id: question.id,
@@ -352,6 +396,7 @@ class SupabaseDataProvider {
         question_ends_at: new Date(now + question.time_limit * 1000).toISOString(),
       })
       .eq("id", roomId);
+    if (roomError) throw roomError;
 
     return question;
   }
@@ -369,7 +414,7 @@ class SupabaseDataProvider {
         room_id: roomId,
         question_id: questionId,
         player_id: playerId,
-        answer,
+        answer: answer.toUpperCase(),
         response_time: responseTime,
       })
       .select()
@@ -389,35 +434,44 @@ class SupabaseDataProvider {
     return data;
   }
 
+  async getQuestionResult(roomId, questionId) {
+    const [question, answers, players] = await Promise.all([
+      this.getQuestion(questionId),
+      this.getAnswers(roomId, questionId),
+      this.listPlayers(roomId),
+    ]);
+    return { question, answers, players };
+  }
+
   async finishQuestion(roomId) {
     const sb = await this._sb();
     const room = await this.getRoom(roomId);
-    const { data: row, error: qErr } = await sb
-      .from("perguntas")
-      .select("*")
-      .eq("id", room.current_question_id)
-      .single();
-    if (qErr) throw qErr;
-    const question = mapPergunta(row);
+    const question = await this.getQuestion(room.current_question_id);
 
     const answers = await this.getAnswers(roomId, question.id);
     for (const ans of answers) {
       const isCorrect = ans.answer === question.correct_option;
       const points = calcPoints(isCorrect, ans.response_time, question.time_limit);
-      await sb.from("answers").update({ points }).eq("id", ans.id);
+      const { error: answerError } = await sb.from("answers").update({ points }).eq("id", ans.id);
+      if (answerError) throw answerError;
       const { data: player } = await sb
         .from("players")
         .select("score")
         .eq("id", ans.player_id)
         .single();
-      await sb
+      const { error: playerError } = await sb
         .from("players")
         .update({ score: (player?.score || 0) + points })
         .eq("id", ans.player_id);
+      if (playerError) throw playerError;
       ans.points = points;
     }
 
-    await sb.from("rooms").update({ status: "showing_result" }).eq("id", roomId);
+    const { error: roomError } = await sb
+      .from("rooms")
+      .update({ status: "showing_result" })
+      .eq("id", roomId);
+    if (roomError) throw roomError;
     const players = await this.listPlayers(roomId);
     return { question, answers, players };
   }
@@ -434,7 +488,9 @@ class SupabaseDataProvider {
           (payload) => callback("player_joined", payload.new))
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "answers", filter: `room_id=eq.${roomId}` },
           (payload) => callback("answer_received", payload.new))
-        .subscribe();
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") callback("subscribed", null);
+        });
     })();
     return () => channel && channel.unsubscribe();
   }

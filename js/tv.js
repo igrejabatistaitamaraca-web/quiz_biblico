@@ -39,10 +39,17 @@ document.getElementById("btn-create-room").addEventListener("click", async () =>
   showScreen("lobby");
 
   unsubscribe = provider.subscribeRoom(room.id, handleRealtimeEvent);
+  players = await provider.listPlayers(room.id);
+  renderLobby();
 });
 
 function handleRealtimeEvent(type, payload) {
-  if (type === "player_joined") {
+  if (type === "subscribed") {
+    provider.listPlayers(room.id).then((currentPlayers) => {
+      players = currentPlayers;
+      renderLobby();
+    });
+  } else if (type === "player_joined") {
     if (!players.find((p) => p.id === payload.id)) players.push(payload);
     renderLobby();
   } else if (type === "answer_received") {

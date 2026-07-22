@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Bíblia Quiz — Partida Online</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Crimson+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--night:#12142a;--deep:#0b0c1c;--paper:#f3e8cc;--dim:#c9bc98;--gold:#c9a227;--bright:#e8c94a;--ink:#1c1608;--green:#22c55e;--red:#ef4444}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;background:radial-gradient(ellipse at 50% -10%,#262a52,var(--night) 58%,var(--deep));color:var(--paper);font-family:'Crimson Pro',serif}
+button,input{font:inherit}.screen{display:none;min-height:100vh;padding:4vh 5vw;flex-direction:column;align-items:center;text-align:center}.screen.active{display:flex}.center{justify-content:center}.panel{width:min(100%,520px);background:rgba(243,232,204,.06);border:1px solid rgba(201,162,39,.35);border-radius:18px;padding:1.4rem}.eyebrow{font-family:Cinzel;color:var(--gold);letter-spacing:.22em;text-transform:uppercase;font-size:.75rem}.title{font-family:Cinzel;color:var(--bright);font-size:clamp(1.8rem,8vw,3rem);margin:.5rem 0}.muted{color:var(--dim)}label{display:block;text-align:left;color:var(--gold);margin:1rem 0 .4rem;font-family:Cinzel;font-size:.78rem}input{width:100%;padding:1rem;border-radius:10px;border:1px solid rgba(201,162,39,.45);background:rgba(0,0,0,.22);color:var(--paper);font-size:1rem}.icons{display:grid;grid-template-columns:repeat(6,1fr);gap:.45rem}.icon{padding:.65rem .2rem;border-radius:10px;border:1px solid rgba(201,162,39,.35);background:rgba(243,232,204,.06);font-size:1.45rem}.icon.selected{background:var(--gold);box-shadow:0 0 0 2px var(--bright)}.actions{display:grid;gap:.7rem;margin-top:1.2rem}.btn{border:0;border-radius:10px;padding:1rem;font-family:Cinzel;font-weight:700;cursor:pointer}.primary{background:linear-gradient(var(--bright),var(--gold));color:var(--ink)}.secondary{background:rgba(243,232,204,.1);border:1px solid var(--gold);color:var(--paper)}.btn:disabled{opacity:.35}.code{font:900 2.1rem Cinzel;color:var(--bright);letter-spacing:.18em;margin:.4rem}.players{list-style:none;padding:0;width:min(100%,520px);display:grid;gap:.55rem}.players li,.rank li{display:flex;align-items:center;gap:.7rem;padding:.8rem 1rem;border-radius:10px;background:rgba(243,232,204,.07);border:1px solid rgba(201,162,39,.25)}.players .name,.rank .name{flex:1;text-align:left}.host{font-size:.7rem;color:var(--gold);font-family:Cinzel}.question-wrap{width:min(100%,720px)}#question-text{font-size:clamp(1.35rem,5vw,2.2rem);line-height:1.25}.timer{font:900 2.2rem Cinzel;color:var(--bright);margin:.7rem}.timer.urgent{color:var(--red)}.answers{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;width:100%}.answer{min-height:120px;border:0;border-radius:14px;color:#10121f;font-weight:700;font-size:1rem;padding:.7rem}.answer:disabled{opacity:.45}.answer strong{display:block;font:900 1.35rem Cinzel}.status{margin-top:1rem;color:var(--dim)}.feedback{font:700 1.5rem Cinzel}.correct{color:var(--green)}.wrong{color:var(--red)}.rank{list-style:none;padding:0;width:min(100%,520px)}.rank .score{font:700 1rem Cinzel;color:var(--bright)}.share{word-break:break-all;font-size:.85rem;color:var(--dim)}.hidden{display:none!important}.error{color:#ff8f9d;margin-top:.8rem}
+@media(max-width:420px){.icons{grid-template-columns:repeat(4,1fr)}.answers{gap:.55rem}.answer{min-height:105px}}
+</style>
+</head>
+<body>
+<section id="screen-home" class="screen center active">
+  <div class="panel">
+    <div class="eyebrow">Partida Online</div><h1 class="title">Bíblia Quiz</h1>
+    <p class="muted">Crie uma sala ou entre pelo convite. De 2 a 6 jogadores, onde estiverem.</p>
+    <label for="player-name">Seu nome</label><input id="player-name" maxlength="24" placeholder="Digite seu nome" />
+    <label>Escolha seu ícone</label><div id="icon-picker" class="icons"></div>
+    <div id="join-code-wrap"><label for="room-code-input">Código da sala</label><input id="room-code-input" maxlength="6" placeholder="ABC123" /></div>
+    <div class="actions"><button id="btn-create" class="btn primary">Criar Sala Online</button><button id="btn-join" class="btn secondary">Entrar na Sala</button></div>
+    <div id="home-error" class="error"></div>
+  </div>
+</section>
+
+<section id="screen-lobby" class="screen">
+  <div class="eyebrow">Sala online</div><div id="room-code" class="code">------</div>
+  <p id="lobby-message" class="muted">Aguardando jogadores...</p><ul id="player-list" class="players"></ul>
+  <div class="panel"><div id="invite-link" class="share"></div><div class="actions"><button id="btn-share" class="btn secondary">Compartilhar convite</button><button id="btn-start" class="btn primary hidden" disabled>Iniciar Partida</button></div></div>
+</section>
+
+<section id="screen-question" class="screen center">
+  <div class="question-wrap"><div id="question-index" class="eyebrow">Pergunta 1</div><div id="timer" class="timer">15</div><h2 id="question-text">Carregando...</h2><div id="answer-grid" class="answers"></div><div id="answer-status" class="status"></div></div>
+</section>
+
+<section id="screen-result" class="screen center">
+  <div id="feedback" class="feedback"></div><div id="points" class="code"></div><p id="correct-answer"></p><p id="explanation" class="muted"></p><h3 class="eyebrow">Placar</h3><ol id="ranking" class="rank"></ol><button id="btn-next" class="btn primary hidden">Próxima Pergunta</button><p id="waiting-next" class="muted">Aguardando o anfitrião...</p>
+</section>
+
+<section id="screen-final" class="screen center">
+  <div class="eyebrow">Resultado final</div><h1 class="title">🏆 Fim de jogo!</h1><ol id="final-ranking" class="rank"></ol><button class="btn primary" onclick="location.href='duelo.html'">Nova Partida</button>
+</section>
+
+<section id="screen-error" class="screen center"><div class="panel"><h2 class="title">Algo deu errado</h2><p id="fatal-error"></p><button class="btn primary" onclick="location.href='duelo.html'">Voltar</button></div></section>
+<script type="module" src="js/duelo.js"></script>
+</body>
+</html>

@@ -13,7 +13,7 @@ export const SUPABASE_URL = "https://darqnnrguolfvlsbuyli.supabase.co";
 export const SUPABASE_ANON_KEY = "sb_publishable_lQq4g0LJ12LprEfAeflxsw_TO_CA_Ej";
 
 // Troque para false quando o Supabase estiver configurado.
-export const DEMO_MODE = true;
+export const DEMO_MODE = false;
 
 let _client = null;
 
