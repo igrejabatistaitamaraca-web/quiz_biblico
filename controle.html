@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#0B0C1C" />
+<link rel="manifest" href="manifest.webmanifest" />
 <title>Bíblia Quiz Live — Controle</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
@@ -75,6 +77,8 @@
 
   /* ---------- QUESTION / ANSWER GRID ---------- */
   #c-q-text { font-size: 1.3rem; margin-bottom: 3vh; line-height:1.35; }
+  #c-question-meta { display:flex; justify-content:space-between; width:100%; gap:1rem; color:var(--gold-bright); font-family:'Cinzel'; margin-bottom:1rem; }
+  #c-reference-hint { color:var(--parchment-dim); margin:-.4rem 0 1rem; }
   #answer-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; width:100%; flex:1; }
   .answer-btn {
     --color: var(--gold);
@@ -140,6 +144,8 @@
 
   <!-- PERGUNTA -->
   <section id="screen-question" class="screen">
+    <div id="c-question-meta"><span id="c-question-kind">Pergunta</span><span id="c-timer">15s</span></div>
+    <div id="c-reference-hint" class="hidden"></div>
     <p id="c-q-text">Carregando pergunta...</p>
     <div id="answer-grid"></div>
   </section>
@@ -172,5 +178,6 @@
   </section>
 
 <script type="module" src="js/controle.js"></script>
+<script type="module" src="js/pwa.js"></script>
 </body>
 </html>

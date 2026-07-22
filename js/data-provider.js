@@ -99,6 +99,7 @@ export function buildQuestionSequence(questions, roomCode) {
  */
 function mapPergunta(row) {
   if (!row) return null;
+  const type = row.tipo || "multiple_choice";
   return {
     id: row.id,
     question: row.pergunta,
@@ -110,8 +111,8 @@ function mapPergunta(row) {
     audio_url: row.audio_url || null,
     category: row.categoria,
     difficulty: row.dificuldade,
-    type: row.tipo || "multiple_choice",
-    time_limit: row.tempo_limite || 15,
+    type,
+    time_limit: type === "bible_open" ? 30 : 15,
     explanation: row.explicacao || "",
     reference: row.referencia || "",
   };
@@ -238,7 +239,11 @@ class DemoDataProvider {
     const store = this._store();
     const room = store.rooms[roomId];
     const nextIndex = room.current_question_index + 1;
-    const question = buildQuestionSequence(DEMO_QUESTIONS, room.code)[nextIndex];
+    const rawQuestion = buildQuestionSequence(DEMO_QUESTIONS, room.code)[nextIndex];
+    const question = rawQuestion && {
+      ...rawQuestion,
+      time_limit: rawQuestion.type === "bible_open" ? 30 : 15,
+    };
 
     if (!question) {
       room.status = "finished";
@@ -261,6 +266,9 @@ class DemoDataProvider {
   async submitAnswer(roomId, questionId, playerId, answer) {
     const store = this._store();
     const room = store.rooms[roomId];
+    if (!room || room.status !== "question_active" || Date.now() > new Date(room.question_ends_at).getTime()) {
+      throw new Error("TEMPO_ESGOTADO");
+    }
     const key = `${roomId}_${questionId}_${playerId}`;
     if (store.answers[key]) return store.answers[key]; // já respondeu
 
@@ -470,6 +478,9 @@ class SupabaseDataProvider {
     const sb = await this._sb();
     const room = await this.getRoom(roomId);
     const answeredAt = Date.now();
+    if (room.status !== "question_active" || answeredAt > new Date(room.question_ends_at).getTime()) {
+      throw new Error("TEMPO_ESGOTADO");
+    }
     const startedAt = new Date(room.question_started_at).getTime();
     const responseTime = Math.max(0, (answeredAt - startedAt) / 1000);
 

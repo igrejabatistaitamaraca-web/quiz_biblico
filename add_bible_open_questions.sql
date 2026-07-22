@@ -28,6 +28,9 @@ on conflict (id) do update set
   referencia = excluded.referencia,
   ativo = excluded.ativo;
 
+update public.perguntas set tempo_limite = 30 where tipo = 'bible_open';
+update public.perguntas set tempo_limite = 15 where tipo <> 'bible_open' or tipo is null;
+
 select setval(
   pg_get_serial_sequence('public.perguntas', 'id'),
   (select max(id) from public.perguntas)

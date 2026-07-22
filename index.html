@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0B0C1C" />
+<link rel="manifest" href="manifest.webmanifest" />
 <title>BoardVerse — Salão de Jogos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
@@ -86,8 +88,8 @@
     display: block;
     text-decoration: none;
     color: inherit;
-    border-radius: 160px 160px 18px 18px;
-    padding: 4.5rem 2.2rem 2.6rem;
+    border-radius: 24px;
+    padding: 3.2rem 2.2rem 2.6rem;
     background:
       radial-gradient(120% 90% at 50% 0%, var(--stone-light) 0%, var(--stone) 55%, #1a1c34 100%);
     border: 1px solid rgba(201,162,39,.35);
@@ -107,6 +109,13 @@
     transform: translateY(-6px);
     border-color: var(--gold-bright);
     box-shadow: 0 26px 60px rgba(0,0,0,.55), 0 0 40px rgba(201,162,39,.15), inset 0 0 0 1px rgba(0,0,0,.3);
+  }
+  .portal:focus-visible { outline: 4px solid var(--gold-bright); outline-offset: 5px; }
+  .portal.featured { grid-column: 1 / -1; background: radial-gradient(100% 160% at 0% 0%, #3b3564 0%, var(--stone) 58%, #17192e 100%); }
+  @media (min-width: 760px) {
+    .portal.featured { display:grid; grid-template-columns: 7rem 1fr 14rem; align-items:center; gap:1.5rem; }
+    .portal.featured .portal-emoji, .portal.featured h2, .portal.featured p { text-align:left; margin-bottom:.4rem; }
+    .portal.featured .portal-meta { justify-content:flex-start; margin:1rem 0 0; }
   }
 
   .portal-emoji {
@@ -157,9 +166,9 @@
 <main>
   <header>
     <div class="crest">🛡️</div>
-    <div class="eyebrow">Salão de Jogos</div>
-    <h1 class="wordmark">BoardVerse</h1>
-    <p class="tagline">Jogos para reunir pessoas perto ou longe.</p>
+    <div class="eyebrow">Jogos bíblicos em grupo</div>
+    <h1 class="wordmark">Bíblia Play</h1>
+    <p class="tagline">Aprenda, compita e compartilhe bons momentos — na TV e no celular.</p>
     <div class="rule"></div>
   </header>
 
@@ -176,7 +185,7 @@
       <span class="portal-cta">Entrar na Mesa</span>
     </a>
 
-    <a class="portal" href="tv_quiz.html">
+    <a class="portal featured" href="tv_quiz.html">
       <span class="portal-index">JOGO 02</span>
       <span class="portal-emoji">📖</span>
       <h2>Bíblia Quiz Live</h2>
@@ -185,7 +194,7 @@
         <span class="tag">Até 6 jogadores</span>
         <span class="tag">Estilo auditório</span>
       </div>
-      <span class="portal-cta">Entrar na Mesa</span>
+      <span class="portal-cta">Criar partida na TV</span>
     </a>
 
     <a class="portal" href="duelo.html">
@@ -206,6 +215,6 @@
     <div>3 jogos disponíveis · mais mesas a caminho</div>
   </footer>
 </main>
-
+<script type="module" src="js/pwa.js"></script>
 </body>
 </html>

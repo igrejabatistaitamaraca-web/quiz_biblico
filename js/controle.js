@@ -4,7 +4,7 @@
 
 import { getDataProvider } from "./data-provider.js";
 import { OPTION_META, PLAYER_ICONS } from "./questions.js";
-import { ROOM_STATUS } from "./game.js";
+import { ROOM_STATUS, runLocalTimer } from "./game.js";
 
 const provider = getDataProvider();
 const screens = {
@@ -22,6 +22,7 @@ let player = null;
 let selectedIcon = null;
 let currentQuestion = null;
 let answeredQuestionIds = new Set();
+let stopTimer = null;
 
 function showScreen(name) {
   Object.entries(screens).forEach(([key, el]) => {
@@ -154,7 +155,13 @@ async function syncRoomState(updatedRoom) {
 // ------------------------------------------------------------
 function showQuestion(question) {
   currentQuestion = question;
+  if (stopTimer) stopTimer();
   document.getElementById("c-q-text").textContent = question.question;
+  const isConsult = question.type === "bible_open";
+  document.getElementById("c-question-kind").textContent = isConsult ? "📖 Consulta bíblica" : "Pergunta rápida";
+  const hint = document.getElementById("c-reference-hint");
+  hint.textContent = isConsult && question.reference ? `Dica: consulte ${question.reference}` : "";
+  hint.classList.toggle("hidden", !hint.textContent);
 
   const grid = document.getElementById("answer-grid");
   grid.innerHTML = "";
@@ -172,6 +179,16 @@ function showQuestion(question) {
 
   document.getElementById("answer-grid").querySelectorAll("button").forEach((b) => (b.disabled = false));
   showScreen("question");
+  stopTimer = runLocalTimer(
+    room.question_ends_at,
+    (secondsLeft) => {
+      document.getElementById("c-timer").textContent = `${secondsLeft}s`;
+      if (secondsLeft <= 0) {
+        document.querySelectorAll("#answer-grid button").forEach((button) => (button.disabled = true));
+      }
+    },
+    () => {}
+  );
 }
 
 async function refreshWaitingCount() {
@@ -184,6 +201,7 @@ async function refreshWaitingCount() {
 }
 
 function showQuestionResult({ question, answers, players }) {
+  if (stopTimer) stopTimer();
   const mine = answers.find((a) => a.player_id === player?.id);
   const correct = mine && mine.answer === question.correct_option;
   const box = document.getElementById("result-feedback");

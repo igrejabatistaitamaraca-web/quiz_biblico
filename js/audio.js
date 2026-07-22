@@ -27,7 +27,7 @@ function speak(text) {
     utter.lang = "pt-BR";
     const voice = pickVoice();
     if (voice) utter.voice = voice;
-    utter.rate = 1.0;
+    utter.rate = 0.88;
     utter.onend = resolve;
     utter.onerror = resolve;
     synth.speak(utter);
@@ -37,6 +37,10 @@ function speak(text) {
 function playFile(url) {
   return new Promise((resolve) => {
     const audio = new Audio(url);
+    audio.preload = "auto";
+    // A velocidade já é definida durante a geração TTS.
+    audio.playbackRate = 1;
+    audio.preservesPitch = true;
     let done = false;
     const finish = () => {
       if (done) return;

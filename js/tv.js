@@ -100,6 +100,10 @@ async function showQuestion(question) {
     "hidden",
     question.type !== "bible_open"
   );
+  document.getElementById("q-reference-hint").textContent =
+    question.type === "bible_open" && question.reference
+      ? `— Consulte ${question.reference}`
+      : "";
 
   const optionsEl = document.getElementById("q-options");
   optionsEl.innerHTML = "";
@@ -117,8 +121,9 @@ async function showQuestion(question) {
   document.getElementById("answer-count").textContent = `0 / ${players.length}`;
   showScreen("question");
 
-  if (question.type === "bible_open" && !question.audio_url) {
-    await narrate(phrase("bibleOpen"), null);
+  if (question.type === "bible_open") {
+    const hint = question.reference ? ` Dica: consulte ${question.reference}.` : "";
+    await narrate(`${phrase("bibleOpen")}${hint}`, null);
   }
   await narrate(`${phrase("intro")} ${question.question}`, question.audio_url);
 

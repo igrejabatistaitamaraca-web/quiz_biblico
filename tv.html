@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0B0C1C" />
+<link rel="manifest" href="manifest.webmanifest" />
 <title>Bíblia Quiz Live — TV</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
@@ -121,6 +123,7 @@
     padding: 1vh 2vw; border-radius: 10px; font-family:'Cinzel'; color: var(--gold-bright);
     margin-bottom: 2vh; font-size: 1.1vw;
   }
+  #q-reference-hint { color: var(--parchment); margin-left: .7em; }
   #q-text { font-size: 2.6vw; max-width: 80vw; margin-bottom: 3vh; line-height: 1.3; }
   #timer {
     font-family:'Cinzel'; font-size: 4vw; font-weight: 900; color: var(--gold-bright);
@@ -204,6 +207,7 @@
   <section id="screen-question" class="screen">
     <div id="q-index">PERGUNTA 1</div>
     <div id="q-bible-open-banner" class="hidden">📖 BÍBLIA ABERTA — vocês podem consultar a Bíblia para responder!</div>
+    <div id="q-reference-hint"></div>
     <div id="q-text">Carregando pergunta...</div>
     <div id="timer">15</div>
     <div id="q-options"></div>
@@ -237,5 +241,6 @@
   </section>
 
 <script type="module" src="js/tv.js"></script>
+<script type="module" src="js/pwa.js"></script>
 </body>
 </html>

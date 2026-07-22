@@ -52,7 +52,13 @@ No modo demo, as 5 perguntas de exemplo em `questions.js` são usadas automatica
 
 ## 3. Narração com áudio gravado
 
-Coloque arquivos `.mp3` em `audio/` e preencha o campo `audio_url` da pergunta correspondente na tabela `perguntas` (ex: `audio/pergunta1.mp3`). Se o campo estiver vazio ou o arquivo não carregar, o narrador usa automaticamente a **Speech Synthesis** do navegador — o jogo nunca trava por falta de áudio.
+Coloque arquivos `.ogg` estéreo em `audio/` e preencha o campo `audio_url` da pergunta correspondente na tabela `perguntas` (ex: `audio/q001.ogg`). As gravações são reproduzidas um pouco mais devagar. Se o campo estiver vazio ou o arquivo não carregar, o narrador usa automaticamente a **Speech Synthesis** do navegador — o jogo nunca trava por falta de áudio.
+
+As perguntas normais têm 15 segundos. Perguntas do tipo `bible_open` têm 30 segundos e mostram `referencia` como dica. O horário oficial fica em `rooms.question_ends_at`; TV e controles calculam o tempo restante a partir dele.
+
+## PWA
+
+Sirva a pasta por HTTPS (ou `localhost`) para habilitar instalação, cache e service worker. A experiência instalada usa `standalone` com preferência por `fullscreen`. O QR Code continua apontando para `controle.html?room=CODIGO`.
 
 ## 4. Fluxo do jogo
 
